@@ -53,4 +53,7 @@ _ide_helper*
 ehthumbs.db
 Thumbs.db
 
+#     Composer lock file     #
+##############################
 *.lock
+
