@@ -39,7 +39,9 @@
         "sroutier/eloquent-ldap": "^1.0@dev",
         "adldap2/adldap2": "5.0.8",
         "jenssegers/agent": "^2.3",
-        "mobiledetect/mobiledetectlib": "^2.8"
+        "mobiledetect/mobiledetectlib": "^2.8",
+        "zofe/rapyd": "2.1.*",
+        "baum/baum": "~1.1"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
