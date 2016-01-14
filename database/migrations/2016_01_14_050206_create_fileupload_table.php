@@ -16,7 +16,7 @@ class CreateFileuploadTable extends Migration
             $table->bigIncrements('id');
             $table->string('client_name');
             $table->string('client_id');
-            $table->unsignedInteger('user_id')->nullable()->default(null);
+            $table->unsignedbigInteger('user_id')->nullable()->default(null);
             $table->string('path');
             $table->string('meta_title')->nullable();
             $table->string('meta_description')->nullable();
