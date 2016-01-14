@@ -13,7 +13,7 @@ class CreateAuditTable extends Migration
     public function up()
     {
         Schema::create('audits', function (Blueprint $table) {
-            $table->increments('id');
+            $table->bigIncrements('id');
             $table->string('category');
             $table->string('message');
             $table->unsignedInteger('user_id')->nullable()->default(null);
