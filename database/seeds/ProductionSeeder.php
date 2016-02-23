@@ -5,6 +5,7 @@ use App\User;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\Route;
+use App\Models\Menu;
 
 class ProductionSeeder extends Seeder
 {
@@ -46,6 +47,12 @@ class ProductionSeeder extends Seeder
             'enabled'       => true,
         ]);
         // Create a few permissions for the admin|security section
+        $permManageMenus = Permission::create([
+            'name'          => 'manage-menus',
+            'display_name'  => 'Manage menus',
+            'description'   => 'Allows a user to manage the site menus.',
+            'enabled'       => true,
+        ]);
         $permManageUsers = Permission::create([
             'name'          => 'manage-users',
             'display_name'  => 'Manage users',
@@ -89,6 +96,12 @@ class ProductionSeeder extends Seeder
             'description'   => 'Allows a user to purge old items from the audit log.',
             'enabled'       => true,
         ]);
+        $permAdminSettings = Permission::create([
+            'name'          => 'admin-settings',
+            'display_name'  => 'Administer site settings',
+            'description'   => 'Allows a user to change site settings.',
+            'enabled'       => true,
+        ]);
 
 
         ////////////////////////////////////
@@ -110,12 +123,22 @@ class ProductionSeeder extends Seeder
         $routeAuditView = Route::where('name', 'admin.audit.index')->get()->first();
         $routeAuditView->permission()->associate($permAuditLogView);
         $routeAuditView->save();
+        $routeAuditShow = Route::where('name', 'admin.audit.show')->get()->first();
+        $routeAuditShow->permission()->associate($permAuditLogView);
+        $routeAuditShow->save();
         $routeAuditPurge = Route::where('name', 'admin.audit.purge')->get()->first();
         $routeAuditPurge->permission()->associate($permAuditPurge);
         $routeAuditPurge->save();
         $routeAuditReplay = Route::where('name', 'admin.audit.replay')->get()->first();
         $routeAuditReplay->permission()->associate($permAuditReplay);
         $routeAuditReplay->save();
+        // Associate manage-menus permissions to routes starting with 'admin.menus.'
+        $manageMenusRoutes = Route::where('name', 'like', "admin.menus.%")->get()->all();
+        foreach ($manageMenusRoutes as $route)
+        {
+            $route->permission()->associate($permManageMenus);
+            $route->save();
+        }
         // Associate manage-permission permissions to routes starting with 'admin.permissions.'
         $managePermRoutes = Route::where('name', 'like', "admin.permissions.%")->get()->all();
         foreach ($managePermRoutes as $route)
@@ -144,6 +167,10 @@ class ProductionSeeder extends Seeder
             $route->permission()->associate($permManageUsers);
             $route->save();
         }
+        // Associate the admin-settings permissions
+        $routeAdminSettings = Route::where('name', 'admin.settings.index')->get()->first();
+        $routeAdminSettings->permission()->associate($permAdminSettings);
+        $routeAdminSettings->save();
 
 
         ////////////////////////////////////
@@ -163,6 +190,15 @@ class ProductionSeeder extends Seeder
             "enabled"       => true
             ]);
         $roleUsers->perms()->attach($permBasicAuthenticated->id);
+        // Create role: menu-manager
+        // Assign permission manage-menus
+        $roleMenuManagers = Role::create([
+            "name"          => "menu-managers",
+            "display_name"  => "Menu managers",
+            "description"   => "Menu managers are granted all permissions to the Admin|Menus section.",
+            "enabled"       => true
+        ]);
+        $roleMenuManagers->perms()->attach($permManageMenus->id);
         // Create role: user-manager
         // Assign permission manage-users
         $roleUserManagers = Role::create([
@@ -226,6 +262,182 @@ class ProductionSeeder extends Seeder
         $userRoot->roles()->attach($roleAdmins->id);
 
 
+        ////////////////////////////////////
+        // Create menu: root
+        $menuRoot = Menu::create([
+//            'id'            => 0,                   // Hard-coded
+            'name'          => 'root',
+            'label'         => 'Root',
+            'position'      => 0,
+            'icon'          => 'fa fa-folder',      // No point setting this as root is not visible.
+            'separator'     => false,
+            'url'           => null,                // No URL, root is not rendered or visible.
+            'enabled'       => true,                // Must be enabled or sub-menus will not be available.
+//            'parent_id'     => 0,                   // Parent of itself.
+            'route_id'      => null,                // No route, root cannot be reached.
+            'permission_id' => $permOpenToAll->id,  // Must be visible to all, for all sub-menus to be visible.
+        ]);
+        // Force root parent to itself.
+        $menuRoot->parent_id = $menuRoot->id;
+        $menuRoot->save();
+        // Create Home menu
+        $menuHome = Menu::create([
+            'name'          => 'home',
+            'label'         => 'Home',
+            'position'      => 0,
+            'icon'          => 'fa fa-home fa-colour-green',
+            'separator'     => false,
+            'url'           => '/',
+            'enabled'       => true,
+            'parent_id'     => $menuRoot->id,       // Parent is root.
+            'route_id'      => $routeHome->id,      // Route to home
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Dashboard menu
+        $menuDashboard = Menu::create([
+            'name'          => 'dashboard',
+            'label'         => 'Dashboard',
+            'position'      => 0,
+            'icon'          => 'fa fa-dashboard',
+            'separator'     => false,
+            'url'           => '/dashboard',
+            'enabled'       => true,
+            'parent_id'     => $menuHome->id,       // Parent is root.
+            'route_id'      => $routeDashboard->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Admin container.
+        $menuAdmin = Menu::create([
+            'name'          => 'admin',
+            'label'         => 'Admin',
+            'position'      => 999,                 // Artificially high number to ensure that it is rendered last.
+            'icon'          => 'fa fa-cog',
+            'separator'     => false,
+            'url'           => null,                // No url.
+            'enabled'       => true,
+            'parent_id'     => $menuRoot->id,       // Parent is root.
+            'route_id'      => null,                // No route
+            'permission_id' => null,                // Get permission from sub-items. If the user has permission to see/use
+                                                    // any sub-items, the admin menu will be rendered, otherwise it will
+                                                    // not.
+        ]);
+        // Create Audit sub-menu
+        $menuAudit = Menu::create([
+            'name'          => 'audit',
+            'label'         => 'Audit',
+            'position'      => 0,
+            'icon'          => 'fa fa-binoculars',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuAdmin->id,      // Parent is admin.
+            'route_id'      => $routeAuditView->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Security container.
+        $menuSecurity = Menu::create([
+            'name'          => 'security',
+            'label'         => 'Security',
+            'position'      => 1,
+            'icon'          => 'fa fa-user-secret fa-colour-red',
+            'separator'     => false,
+            'url'           => null,                // No url.
+            'enabled'       => true,
+            'parent_id'     => $menuAdmin->id,      // Parent is admin.
+            'route_id'      => null,                // No route
+            'permission_id' => null,                // Get permission from sub-items.
+        ]);
+        // Create Menus sub-menu
+        $menuMenus = Menu::create([
+            'name'          => 'menus',
+            'label'         => 'Menus',
+            'position'      => 0,
+            'icon'          => 'fa fa-bars',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuSecurity->id,   // Parent is security.
+            'route_id'      => Route::where('name', 'like', "admin.menus.index")->get()->first()->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create separator
+        $menuUsers = Menu::create([
+            'name'          => 'menus-users-separator',
+            'label'         => '-----',
+            'position'      => 1,
+            'icon'          => null,
+            'separator'     => true,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuSecurity->id,   // Parent is security.
+            'route_id'      => null,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Users sub-menu
+        $menuUsers = Menu::create([
+            'name'          => 'users',
+            'label'         => 'Users',
+            'position'      => 2,
+            'icon'          => 'fa fa-user',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuSecurity->id,   // Parent is security.
+            'route_id'      => Route::where('name', 'like', "admin.users.index")->get()->first()->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Roles sub-menu
+        $menuRoles = Menu::create([
+            'name'          => 'roles',
+            'label'         => 'Roles',
+            'position'      => 3,
+            'icon'          => 'fa fa-users',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuSecurity->id,   // Parent is security.
+            'route_id'      => Route::where('name', 'like', "admin.roles.index")->get()->first()->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Permissions sub-menu
+        $menuPermissions = Menu::create([
+            'name'          => 'permissions',
+            'label'         => 'Permissions',
+            'position'      => 4,
+            'icon'          => 'fa fa-bolt',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuSecurity->id,   // Parent is security.
+            'route_id'      => Route::where('name', 'like', "admin.permissions.index")->get()->first()->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Routes sub-menu
+        $menuRoutes = Menu::create([
+            'name'          => 'routes',
+            'label'         => 'Routes',
+            'position'      => 5,
+            'icon'          => 'fa fa-road',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuSecurity->id,   // Parent is security.
+            'route_id'      => Route::where('name', 'like', "admin.routes.index")->get()->first()->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
+        // Create Settings sub-menu
+        $menuSettings = Menu::create([
+            'name'          => 'setting',
+            'label'         => 'Settings',
+            'position'      => 2,
+            'icon'          => 'fa fa-cogs',
+            'separator'     => false,
+            'url'           => null,                // Get URL from route.
+            'enabled'       => true,
+            'parent_id'     => $menuAdmin->id,      // Parent is admin.
+            'route_id'      => $routeAdminSettings->id,
+            'permission_id' => null,                // Get permission from route.
+        ]);
 
     }
 }

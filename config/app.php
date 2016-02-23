@@ -157,6 +157,7 @@ return [
         App\Providers\AppServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\MenuBuilderServiceProvider::class,
 
         Sroutier\EloquentLDAP\Providers\EloquentLDAPServiceProvider::class,
 
@@ -166,6 +167,8 @@ return [
         Laracasts\Flash\FlashServiceProvider::class,
         YAAP\Theme\ThemeServiceProvider::class,
         Zizaco\Entrust\EntrustServiceProvider::class,
+        Zofe\Rapyd\RapydServiceProvider::class,
+        Baum\Providers\BaumServiceProvider::class,
     ],
 
     /*
@@ -214,12 +217,13 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View'      => Illuminate\Support\Facades\View::class,
 
-        'Form'       => Collective\Html\FormFacade::class,
-        'Html'       => Collective\Html\HtmlFacade::class,
-        'Debugbar'   => Barryvdh\Debugbar\Facade::class,
-        'Flash'      => Laracasts\Flash\Flash::class,
-        'Theme'      => YAAP\Theme\Facades\Theme::class,
-        'Entrust'    => Zizaco\Entrust\EntrustFacade::class,
+        'Form'        => Collective\Html\FormFacade::class,
+        'Html'        => Collective\Html\HtmlFacade::class,
+        'Debugbar'    => Barryvdh\Debugbar\Facade::class,
+        'Flash'       => Laracasts\Flash\Flash::class,
+        'Theme'       => YAAP\Theme\Facades\Theme::class,
+        'Entrust'     => Zizaco\Entrust\EntrustFacade::class,
+        'MenuBuilder' => App\Facades\MenuBuilderFacade::class,
     ],
 
 ];

@@ -7,6 +7,7 @@ storage/
 # Configuration testing #
 #########################
 .env.mysql
+.env.pgsql
 .env.sqlite3
 
 # Package development #
@@ -34,6 +35,11 @@ ideconfig
 _ide_helper*
 .phpstorm.meta.php
 
+# Sublime files #
+#################
+*.sublime-project
+*.sublime-workspace
+
 #     Logs      #
 #################
 *.log
@@ -52,3 +58,5 @@ _ide_helper*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+*.lock

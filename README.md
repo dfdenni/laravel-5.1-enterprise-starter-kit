@@ -55,12 +55,14 @@ Directory (AD) authentication and the dynamic authorization module. But wait the
         * Automatically creates local account for LDAP/AD users on first login.
         * Automatic assignment of users to local roles based on matching LDAP/AD group membership.
         * Automatically refresh role assignment on user login.
+* Dynamic and security-aware menus system and breadcrumb trail. Menu editor included in the admin section
 * Optional walled garden mode.
 * Optional audit log of user actions.
     * Allows to "replay" some user actions.
     * Allows to hook a custom data parser and blade partial to render the "replay" data.
 * Laravel [Repositories](https://github.com/Bosnadev/Repositories).
 * Flash notifications using [laracasts/flash](https://github.com/laracasts/flash).
+* CRUD widgets, datatable, grids, forms with [rapyd-laravel](https://github.com/zofe/rapyd-laravel)
 * Internationalization (i18n).
 * Gulp and Elixir ready to compile and minimize Sass & CoffeeScript.
 * Bootstrap v3.3.4.
@@ -73,6 +75,7 @@ Directory (AD) authentication and the dynamic authorization module. But wait the
     * Laravel [DebugBar](https://github.com/barryvdh/laravel-debugbar).
     * Laravel [IDE Helper](https://github.com/barryvdh/laravel-ide-helper).
     * Laravel [Packager](https://github.com/jeroen-g/laravel-packager)
+    * [Baum](https://github.com/etrepat/baum)
 
 
 ## Roadmap
@@ -82,8 +85,6 @@ List of future feature and items that are still have to be completed, in no part
 * Implement soft-delete for Users, Roles, Permissions and maybe even Routes.
 * Persistent notifications.
 * Single sign-on for IIS and Apache.
-* Breadcrumb.
-* Dynamic menu based on roles/permissions.
 * Favicon (one per theme?).
 * Settings with precedence, Application vs User settings and DB vs .env file.
 * Sortable tables.
@@ -226,7 +227,7 @@ Fetch all dependencies for Node.js using *npm* by using the following command:
 npm install
 ```
 
-**_NOTE:_** If the *npm install* command fails check the tip on *Node.js* in the [Troubleshooting](#troubleshooting) section.
+**_NOTE:_** If the *npm install* command fails or hangs, check the tip on *Node.js* in the [Troubleshooting](#troubleshooting) section.
 ### Basic configuration
 
 #### Create your *.env* file
@@ -363,7 +364,36 @@ For more information on how to configure the module, refer to documentation of t
 [sroutier/eloquent-ldap](https://github.com/sroutier/eloquent-ldap). Additionally, every option is explained in the config file 
 */config/eloquent-ldap.php*.
 
-### Walled garden
+### Menu system
+The menus system can be configured with the menu editor included in the administration section under the security group.
+To edit an existing menu item simply click on it in the menu tree on the left, and edit the entry details, on the right, 
+once loaded. Edit the entry then click on the *Save* button.
+To delete an existing menu item simply select it on the menu tree, then once loaded click on the *Delete* button.
+To create a new menu item, first click on the *Clear* button, if you previously had an existing menu entry selected, 
+then fill in the form details following these guidelines:
+
+* *Name*: The internal and unique name used as a reference. Required field.
+* *Label*: The label shown to the users.
+* *Position*: A number used to sort the menu item amongst it siblings. In the event that two items have the same 
+position value the items are sorted alphabetically. The position numbers do not have to be sequential, gaps in the 
+numbering can created to allow for future insertion, or to ensure that an item or branch is placed last, as is the 
+case of the ``Admin`` branch.
+* *Icon*: The class of a Font-Awesome icon, with the optional colour qualifier. For example ``fa fa-bolt`` or 
+``fa fa-warning fa-colour-orange``
+* *Separator*: Checkbox that indicates if this item is to be a separator. When enabled, the label is not shown so a 
+good label to use is a few dashes (ie: "----"). Also the item when rendered will not have a URL.
+* *URL*: The URL field is best used to create an menu entry pointing to an external resource, otherwise when rendered
+the URL should be generated from the associated *Route*.
+* *Enabled*: Allows to enable or disable any entry. Any disabled entry will not be rendered. Useful to temporally 
+disable an entire branch.
+* *Parent*: List all other menu entries, except separators, to select, as the name indicates the parent of the current 
+entry. This allows setting the hierarchy.
+* *Route*: Associate the current menu entry with a Application Route. This will also give the menu entry both a URL 
+and a Permission.
+* *Permission*: If the item is not associated with a *Route*, a specific permission can be selected. Best used to secure
+access to external resources when specified with the *URL* field.
+
+### Walled garden.
 To enable the optional walled garden mode simply set the *WALLED_GARDEN* variable to *true* in the *.env* file as shown 
 below:
 ````
@@ -454,6 +484,16 @@ Following the example above, here is a description of how triggering a replayabl
 An audit log entry that is replayable will most likely have some data attributes that make it unique and has to be processed in order to be displayed properlly. In the call to the *Audit::log()* function above that creates the replayable entry, the 5th parameter, the *data_parser*, is the fully qualified name of a function that will get called to prepare the data before returning the view displaying the details to the browser. 
 Additionaly the *data_parser* function can add to the *data* array an entry with a key of *show_partial* that points to a partial blade file that will be responsible for rendering the parsed data of the audit log entry. If no *show_partial* is specified the default behaviour is to use *var_dump()* to simply dump the value on the page.
 
+### Rapyd demo
+To enable the demo mini sub-site that comes with [rapyd-laravel](https://github.com/zofe/rapyd-laravel) uncomment the following line at the end of the file *app/Http/rapyd.php*:
+
+```
+// Uncomment to enable the demo route.
+Route::controller('rapyd-demo', '\Zofe\Rapyd\Demo\DemoController');
+```
+
+For more information on how to use the [Rapyd CRUD and Grid](https://github.com/zofe/rapyd-laravel) feature please refer to original package notes.
+
 
 ## Deploying to production
 Before deploying to a production or live server, you should take care of a few tasks.
@@ -472,6 +512,8 @@ gulp --production
 Below are some troubleshooting tips that we have encoutered and resolved:
 
 ### Node.js
+
+#### Old version
 As pointed out by [thassan](https://github.com/thassan) in [Issue 6](https://github.com/sroutier/laravel-5.1-enterprise-starter-kit/issues/6), 
 if you distribution or OS ships with an older version of Node.js the name of the executable may be 'nodejs'. In recent versions the name has 
 been changed to 'node'. This will cause some Node.js packages to fail during the installation as they expect to find the 'node' executable. 
@@ -482,13 +524,21 @@ To create a symbolic link issue the command:
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 ```
 
-Also if the installation of the Node.js packages fails with a 'ENOENT' error, you may need to create a empty file at the root of the project as 
+#### ENOENT error
+If the installation of Node.js packages fails with a 'ENOENT' error, you may need to create a empty file at the root of the project as 
 explained on [Stack Overflow](http://stackoverflow.com/questions/17990647/npm-install-errors-with-error-enoent-chmod). 
 To create the empty file run:
 ```
 touch .npmignore
 ```
 
+#### Hangs
+If the installation of Node.js packages appears to hang, it may be due to a race condition that does not manifest itself when invoked
+with the ``-ddd`` after having deleted the ``node_modules`` directory at the root of the project:
+```
+rm -rf node_modules
+npm install -ddd
+```
 
 ## Change log
 Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
