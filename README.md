@@ -55,6 +55,7 @@ Directory (AD) authentication and the dynamic authorization module. But wait the
         * Automatically creates local account for LDAP/AD users on first login.
         * Automatic assignment of users to local roles based on matching LDAP/AD group membership.
         * Automatically refresh role assignment on user login.
+* Dynamic and security-aware menus system and breadcrumb trail. Menu editor included in the admin section
 * Optional walled garden mode.
 * Optional audit log of user actions.
     * Allows to "replay" some user actions.
@@ -84,8 +85,6 @@ List of future feature and items that are still have to be completed, in no part
 * Implement soft-delete for Users, Roles, Permissions and maybe even Routes.
 * Persistent notifications.
 * Single sign-on for IIS and Apache.
-* Breadcrumb.
-* Dynamic menu based on roles/permissions.
 * Favicon (one per theme?).
 * Settings with precedence, Application vs User settings and DB vs .env file.
 * Sortable tables.
@@ -228,7 +227,7 @@ Fetch all dependencies for Node.js using *npm* by using the following command:
 npm install
 ```
 
-**_NOTE:_** If the *npm install* command fails check the tip on *Node.js* in the [Troubleshooting](#troubleshooting) section.
+**_NOTE:_** If the *npm install* command fails or hangs, check the tip on *Node.js* in the [Troubleshooting](#troubleshooting) section.
 ### Basic configuration
 
 #### Create your *.env* file
@@ -365,7 +364,36 @@ For more information on how to configure the module, refer to documentation of t
 [sroutier/eloquent-ldap](https://github.com/sroutier/eloquent-ldap). Additionally, every option is explained in the config file 
 */config/eloquent-ldap.php*.
 
-### Walled garden
+### Menu system
+The menus system can be configured with the menu editor included in the administration section under the security group.
+To edit an existing menu item simply click on it in the menu tree on the left, and edit the entry details, on the right, 
+once loaded. Edit the entry then click on the *Save* button.
+To delete an existing menu item simply select it on the menu tree, then once loaded click on the *Delete* button.
+To create a new menu item, first click on the *Clear* button, if you previously had an existing menu entry selected, 
+then fill in the form details following these guidelines:
+
+* *Name*: The internal and unique name used as a reference. Required field.
+* *Label*: The label shown to the users.
+* *Position*: A number used to sort the menu item amongst it siblings. In the event that two items have the same 
+position value the items are sorted alphabetically. The position numbers do not have to be sequential, gaps in the 
+numbering can created to allow for future insertion, or to ensure that an item or branch is placed last, as is the 
+case of the ``Admin`` branch.
+* *Icon*: The class of a Font-Awesome icon, with the optional colour qualifier. For example ``fa fa-bolt`` or 
+``fa fa-warning fa-colour-orange``
+* *Separator*: Checkbox that indicates if this item is to be a separator. When enabled, the label is not shown so a 
+good label to use is a few dashes (ie: "----"). Also the item when rendered will not have a URL.
+* *URL*: The URL field is best used to create an menu entry pointing to an external resource, otherwise when rendered
+the URL should be generated from the associated *Route*.
+* *Enabled*: Allows to enable or disable any entry. Any disabled entry will not be rendered. Useful to temporally 
+disable an entire branch.
+* *Parent*: List all other menu entries, except separators, to select, as the name indicates the parent of the current 
+entry. This allows setting the hierarchy.
+* *Route*: Associate the current menu entry with a Application Route. This will also give the menu entry both a URL 
+and a Permission.
+* *Permission*: If the item is not associated with a *Route*, a specific permission can be selected. Best used to secure
+access to external resources when specified with the *URL* field.
+
+### Walled garden.
 To enable the optional walled garden mode simply set the *WALLED_GARDEN* variable to *true* in the *.env* file as shown 
 below:
 ````
@@ -484,6 +512,8 @@ gulp --production
 Below are some troubleshooting tips that we have encoutered and resolved:
 
 ### Node.js
+
+#### Old version
 As pointed out by [thassan](https://github.com/thassan) in [Issue 6](https://github.com/sroutier/laravel-5.1-enterprise-starter-kit/issues/6), 
 if you distribution or OS ships with an older version of Node.js the name of the executable may be 'nodejs'. In recent versions the name has 
 been changed to 'node'. This will cause some Node.js packages to fail during the installation as they expect to find the 'node' executable. 
@@ -494,13 +524,21 @@ To create a symbolic link issue the command:
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 ```
 
-Also if the installation of the Node.js packages fails with a 'ENOENT' error, you may need to create a empty file at the root of the project as 
+#### ENOENT error
+If the installation of Node.js packages fails with a 'ENOENT' error, you may need to create a empty file at the root of the project as 
 explained on [Stack Overflow](http://stackoverflow.com/questions/17990647/npm-install-errors-with-error-enoent-chmod). 
 To create the empty file run:
 ```
 touch .npmignore
 ```
 
+#### Hangs
+If the installation of Node.js packages appears to hang, it may be due to a race condition that does not manifest itself when invoked
+with the ``-ddd`` after having deleted the ``node_modules`` directory at the root of the project:
+```
+rm -rf node_modules
+npm install -ddd
+```
 
 ## Change log
 Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
