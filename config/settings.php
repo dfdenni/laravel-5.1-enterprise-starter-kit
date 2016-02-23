@@ -1,14 +1,14 @@
 <?php
 
-return array(
-	'script_url' => URL::to_route('upload'),
-	'upload_dir' => path('storage').'storage/uploads/files/',
-	'upload_url' => URL::base().'storage/uploads/files/',
-	'delete_type' => 'POST',
-	'image_versions' => array(
-		'thumbnail' => array(
-			'upload_dir' => path('storage').'storage/uploads/thumbnails/',
-			'upload_url' => URL::base().'storage/uploads/thumbnails/',
-		),
-	),
-);
+// return array(
+// 	'script_url' => URL::to_route('upload'),
+// 	'upload_dir' => path('storage').'storage/uploads/files/',
+// 	'upload_url' => URL::base().'storage/uploads/files/',
+// 	'delete_type' => 'POST',
+// 	'image_versions' => array(
+// 		'thumbnail' => array(
+// 			'upload_dir' => path('storage').'storage/uploads/thumbnails/',
+// 			'upload_url' => URL::base().'storage/uploads/thumbnails/',
+// 		),
+// 	),
+// );
